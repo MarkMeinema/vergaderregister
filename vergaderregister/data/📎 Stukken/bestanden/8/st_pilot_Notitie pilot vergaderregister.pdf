@@ -1,0 +1,44 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Length 829 >>
+stream
+BT /F2 16 Tf 60 780 Td (Notitie pilot vergaderregister) Tj ET
+BT /F1 9 Tf 60 757 Td (UWV · fictieve demodata · intern · 2026-04-14) Tj ET
+BT /F1 11 Tf 60 723 Td (Notitie over een pilot met een vergaderregister waarin vergaderingen, besluiten en) Tj ET
+BT /F1 11 Tf 60 705 Td (acties als losse gegevens worden vastgelegd.) Tj ET
+BT /F1 11 Tf 60 669 Td (Waarom: acties en besluiten zijn in Word-verslagen slecht terug te vinden. Bestuurders) Tj ET
+BT /F1 11 Tf 60 651 Td (willen per persoon, per onderwerp en per onderdeel kunnen zoeken.) Tj ET
+BT /F1 11 Tf 60 615 Td (Hoe: elk besluit en elke actie is een apart Markdown-bestand met gestructureerde) Tj ET
+BT /F1 11 Tf 60 597 Td (kenmerken. Dat is een open formaat dat zonder speciale software leesbaar blijft en past) Tj ET
+BT /F1 11 Tf 60 579 Td (bij informatieautonomie.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000212 00000 n 
+0000000314 00000 n 
+0000001194 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1330
+%%EOF

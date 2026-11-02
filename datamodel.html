@@ -1,0 +1,349 @@
+<title>Datamodel Vergaderregister</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: één leeskolom; diagram en entiteitkaarten mogen breder. Kleur per entiteit loopt door van diagram naar kaart. */
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --ink:#16202E; --muted:#5A6577; --line:#D9DEE6; --soft:#EDF0F4;
+  --accent:#1D5C86;
+  --c-org:#5B4FA8; --c-pers:#2F7D6D; --c-verg:#1D5C86; --c-deel:#6B7687; --c-agenda:#3E6FB0;
+  --c-stuk:#8A5A2B; --c-bes:#2E7D32; --c-act:#C2610C; --c-ond:#A23B6B;
+  --f-display:"Literata", Georgia, "Times New Roman", serif;
+  --f-body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10151D; --surface:#171E29; --ink:#E6EAF0; --muted:#9AA6B8; --line:#2A3443; --soft:#1E2734;
+  --accent:#6FB0DE;
+  --c-org:#A79CF0; --c-pers:#6CC6B2; --c-verg:#6FB0DE; --c-deel:#A3AEBF; --c-agenda:#8DB2EA;
+  --c-stuk:#D9A26B; --c-bes:#7CCB80; --c-act:#F2A050; --c-ond:#E886B4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10151D; --surface:#171E29; --ink:#E6EAF0; --muted:#9AA6B8; --line:#2A3443; --soft:#1E2734;
+  --accent:#6FB0DE;
+  --c-org:#A79CF0; --c-pers:#6CC6B2; --c-verg:#6FB0DE; --c-deel:#A3AEBF; --c-agenda:#8DB2EA;
+  --c-stuk:#D9A26B; --c-bes:#7CCB80; --c-act:#F2A050; --c-ond:#E886B4; color-scheme:dark}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 72px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--f-display);font-weight:650;line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.4vw,40px)}
+h2{font-size:24px;margin-bottom:6px}
+h3{font-size:18px}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+header{display:grid;gap:14px;margin-bottom:40px}
+.lede{font-size:17.5px;color:var(--ink)}
+.lede em{font-style:normal;font-weight:600}
+section{display:grid;gap:18px;margin-top:56px}
+.sub{color:var(--muted)}
+
+/* diagram */
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto;padding:12px}
+.diagram svg{display:block;min-width:760px;width:100%;height:auto}
+.diagram text{font-family:var(--f-body)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{flex:none}
+
+/* entiteiten */
+.toc{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:4px 11px 4px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none}
+.chip:hover,.chip:focus-visible{border-color:var(--accent);outline:none}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none}
+.entities{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,500px),1fr));gap:18px}
+.entity{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:8px;padding:18px 18px 8px;display:grid;gap:10px;min-width:0;align-content:start}
+.entity .head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.entity h3{color:var(--ink)}
+.entity .kind{font-size:12px;color:var(--c);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.entity .why{color:var(--muted);font-size:14.5px}
+.fields{width:100%;border-collapse:collapse;font-size:14px}
+.fields td{border-top:1px solid var(--soft);padding:7px 6px 7px 0;vertical-align:top}
+.fields td.f{font-family:var(--f-mono);font-size:13px;white-space:nowrap;padding-right:10px;width:1%}
+.fields td.t{white-space:nowrap;color:var(--muted);font-size:12.5px;padding-right:10px;width:1%}
+.fields td.t b{color:var(--c-ref,var(--accent));font-weight:600}
+.req{color:var(--c);font-weight:700;margin-left:2px}
+.fields .n{color:var(--muted)}
+.audit{font-size:13.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:12px}
+
+/* voorbeeld */
+.example{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px;display:grid;gap:18px}
+.ex-head{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+.ex-head .when{color:var(--muted);font-variant-numeric:tabular-nums}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.ex-col{display:grid;gap:8px;align-content:start;min-width:0}
+.ex-col h4{margin:0;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--c);display:flex;gap:7px;align-items:center}
+.rec{border:1px solid var(--soft);background:var(--bg);border-radius:6px;padding:9px 11px;font-size:14px;display:grid;gap:2px}
+.rec .meta{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rec code{font-family:var(--f-mono);font-size:12.5px;color:var(--c-bes)}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor;margin-left:4px;vertical-align:1px}
+.pill.open{color:var(--c-act)} .pill.ok{color:var(--c-bes)} .pill.off{color:var(--muted)}
+
+/* zoekvragen */
+.qtable-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.qtable{width:100%;border-collapse:collapse;font-size:14.5px;min-width:640px}
+.qtable th{text-align:left;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 16px;border-bottom:1px solid var(--line)}
+.qtable td{padding:11px 16px;border-top:1px solid var(--soft);vertical-align:top}
+.qtable td:first-child{font-weight:500;width:42%}
+.path{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px}
+.path .step{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:4px;background:var(--soft)}
+.path .arr{color:var(--muted)}
+.facets{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.facet{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:4px}
+.facet b{font-size:14.5px}
+.facet span{font-size:13.5px;color:var(--muted)}
+
+/* keuzes */
+.choices{display:grid;gap:12px;counter-reset:k}
+.choice{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 56px;position:relative;display:grid;gap:4px}
+.choice::before{counter-increment:k;content:counter(k);position:absolute;left:18px;top:15px;width:26px;height:26px;border-radius:50%;background:var(--soft);color:var(--accent);font-weight:700;font-size:14px;display:grid;place-items:center}
+.choice .rec-line{font-size:14px;color:var(--muted)}
+.choice .rec-line b{color:var(--ink);font-weight:600}
+.diff{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.diff div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:14.5px;display:grid;gap:4px}
+.diff b{font-size:14.5px}
+footer{margin-top:56px;font-size:13px;color:var(--muted)}
+a{color:var(--accent)}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Pilot informatieautonomie · voorstel datamodel · 2 november 2026</div>
+  <h1>Datamodel vergaderregister</h1>
+  <p class="lede prose">Een verslag is hier geen document meer, maar een verzameling losse, gekoppelde gegevens. <em>De vergadering</em> is het scharnier: daaraan hangen aanwezigen, stukken, besluiten en acties. Elk daarvan is ook los te vinden, te filteren en te volgen, per persoon, per onderdeel, per onderwerp of door de tijd heen.</p>
+  <p class="sub prose">Het model bouwt voort op de Obsidian-opzet (Vergaderingen, Acties, Besluiten, Onderwerpen, Personen) en voegt toe wat bestuurders nodig hebben om echt te kunnen zoeken en verantwoorden.</p>
+</header>
+
+<section aria-labelledby="h-overzicht">
+  <div><h2 id="h-overzicht">In één oogopslag</h2>
+  <p class="sub prose">Negen soorten gegevens. Lijnen tonen de koppelingen; “1” en “n” geven aan hoeveel er aan elke kant kunnen hangen.</p></div>
+  <div class="diagram">
+  <svg viewBox="0 0 1000 650" role="img" aria-label="Diagram van het datamodel: Bedrijfsonderdeel houdt Vergaderingen; een Vergadering heeft Deelnames (Personen), Agendapunten en Stukken; Agendapunten leveren Besluiten en Acties op en zijn gekoppeld aan Onderwerpen; elke Actie heeft één Persoon als eigenaar.">
+    <defs>
+      <style>
+        .ln{stroke:var(--muted);stroke-width:1.6;fill:none}
+        .ln.opt{stroke-dasharray:5 4}
+        .card{fill:var(--surface);stroke:var(--line);stroke-width:1.2}
+        .t1{font-size:17px;font-weight:700;fill:var(--ink)}
+        .t2{font-size:12.5px;fill:var(--muted)}
+        .cd{font-size:12.5px;font-weight:700;fill:var(--muted)}
+        .lb{font-size:12px;fill:var(--muted);font-style:italic}
+      </style>
+    </defs>
+    <!-- lijnen -->
+    <path class="ln" d="M240 78 H400"/><text class="cd" x="248" y="70">1</text><text class="cd" x="384" y="70">n</text><text class="lb" x="292" y="98">houdt</text>
+    <path class="ln" d="M600 78 H760"/><text class="cd" x="608" y="70">1</text><text class="cd" x="744" y="70">n</text><text class="lb" x="640" y="98">stukken</text>
+    <path class="ln" d="M500 116 V270"/><text class="cd" x="508" y="134">1</text><text class="cd" x="508" y="262">n</text><text class="lb" x="512" y="200">agenda</text>
+    <path class="ln" d="M420 116 L230 270"/><text class="cd" x="404" y="138">1</text><text class="cd" x="246" y="262">n</text><text class="lb" x="262" y="190">aanwezigheid</text>
+    <path class="ln" d="M140 346 V500"/><text class="cd" x="148" y="364">n</text><text class="cd" x="148" y="492">1</text><text class="lb" x="152" y="428">wie</text>
+    <path class="ln opt" d="M600 290 L780 116"/><text class="lb" x="680" y="184">bij punt</text>
+    <path class="ln" d="M600 308 H760"/><text class="cd" x="608" y="300">n</text><text class="cd" x="744" y="300">n</text><text class="lb" x="650" y="328">gaat over</text>
+    <path class="ln" d="M470 346 L430 500"/><text class="cd" x="472" y="366">1</text><text class="cd" x="420" y="492">n</text><text class="lb" x="380" y="430">besluit</text>
+    <path class="ln" d="M540 346 L660 500"/><text class="cd" x="528" y="366">1</text><text class="cd" x="666" y="492">n</text><text class="lb" x="612" y="430">actie</text>
+    <path class="ln opt" d="M530 538 H580"/><text class="lb" x="527" y="528">leidt tot</text>
+    <path class="ln" d="M140 576 V616 H680 V576"/><text class="cd" x="148" y="596">1</text><text class="cd" x="688" y="596">n</text><text class="lb" x="330" y="636">eigenaar (precies één per actie)</text>
+    <path class="ln opt" d="M880 116 L880 270"/><text class="lb" x="888" y="200">via punt</text>
+    <!-- kaarten -->
+    <g><rect class="card" x="40" y="40" width="200" height="76" rx="7"/><rect x="40" y="40" width="5" height="76" rx="2" fill="var(--c-org)"/><text class="t1" x="58" y="72">Bedrijfsonderdeel</text><text class="t2" x="58" y="96">college, MT, team, commissie</text></g>
+    <g><rect class="card" x="400" y="40" width="200" height="76" rx="7" style="stroke:var(--c-verg);stroke-width:2"/><rect x="400" y="40" width="5" height="76" rx="2" fill="var(--c-verg)"/><text class="t1" x="418" y="72">Vergadering</text><text class="t2" x="418" y="96">datum, status, samenvatting</text></g>
+    <g><rect class="card" x="760" y="40" width="200" height="76" rx="7"/><rect x="760" y="40" width="5" height="76" rx="2" fill="var(--c-stuk)"/><text class="t1" x="778" y="72">Stuk</text><text class="t2" x="778" y="96">bijlage, doorzoekbaar</text></g>
+    <g><rect class="card" x="40" y="270" width="200" height="76" rx="7" style="stroke-dasharray:5 4"/><rect x="40" y="270" width="5" height="76" rx="2" fill="var(--c-deel)"/><text class="t1" x="58" y="302">Deelname</text><text class="t2" x="58" y="326">rol + aanwezig/afwezig</text></g>
+    <g><rect class="card" x="400" y="270" width="200" height="76" rx="7"/><rect x="400" y="270" width="5" height="76" rx="2" fill="var(--c-agenda)"/><text class="t1" x="418" y="302">Agendapunt</text><text class="t2" x="418" y="326">volgnummer, bespreking</text></g>
+    <g><rect class="card" x="760" y="270" width="200" height="76" rx="7"/><rect x="760" y="270" width="5" height="76" rx="2" fill="var(--c-ond)"/><text class="t1" x="778" y="302">Onderwerp</text><text class="t2" x="778" y="326">dossier dat terugkomt</text></g>
+    <g><rect class="card" x="40" y="500" width="200" height="76" rx="7"/><rect x="40" y="500" width="5" height="76" rx="2" fill="var(--c-pers)"/><text class="t1" x="58" y="532">Persoon</text><text class="t2" x="58" y="556">naam, functie, foto</text></g>
+    <g><rect class="card" x="330" y="500" width="200" height="76" rx="7"/><rect x="330" y="500" width="5" height="76" rx="2" fill="var(--c-bes)"/><text class="t1" x="348" y="532">Besluit</text><text class="t2" x="348" y="556">nummer, tekst, status</text></g>
+    <g><rect class="card" x="580" y="500" width="200" height="76" rx="7"/><rect x="580" y="500" width="5" height="76" rx="2" fill="var(--c-act)"/><text class="t1" x="598" y="532">Actie</text><text class="t2" x="598" y="556">eigenaar, deadline, status</text></g>
+  </svg>
+  </div>
+  <div class="legend">
+    <span><svg width="34" height="8"><path d="M0 4H34" stroke="currentColor" stroke-width="1.6"/></svg>vaste koppeling</span>
+    <span><svg width="34" height="8"><path d="M0 4H34" stroke="currentColor" stroke-width="1.6" stroke-dasharray="5 4"/></svg>optionele koppeling</span>
+    <span><svg width="22" height="14"><rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-dasharray="4 3"/></svg>koppeltabel (verbindt twee soorten)</span>
+  </div>
+</section>
+
+<section aria-labelledby="h-ent">
+  <div><h2 id="h-ent">De bouwstenen</h2>
+  <p class="sub prose">Per soort de velden. Een <span style="color:var(--accent);font-weight:700">●</span> achter de veldnaam betekent verplicht. <b style="color:var(--accent)">→</b> is een koppeling naar een andere soort.</p></div>
+  <nav class="toc" id="toc" aria-label="Spring naar bouwsteen"></nav>
+  <div class="entities" id="entities"></div>
+  <p class="audit prose">Elk record krijgt daarnaast automatisch een vaste ID, plus <code>aangemaakt op/door</code> en <code>gewijzigd op/door</code>. Zo is altijd te herleiden wie een besluit of actie heeft vastgelegd of aangepast.</p>
+</section>
+
+<section aria-labelledby="h-ex">
+  <div><h2 id="h-ex">Zo valt één vergadering uiteen</h2>
+  <p class="sub prose">De collegevergadering van 8 januari 2026 uit de Obsidian-proef, vertaald naar dit model. Wat vroeger één Word-document was, zijn nu losse records die elk vanuit meerdere kanten te vinden zijn.</p></div>
+  <div class="example">
+    <div class="ex-head"><h3>College van B&amp;W</h3><span class="when">do 8 januari 2026 · 09:00–11:30 · Raadzaal</span><span class="pill ok">vastgesteld</span></div>
+    <div class="ex-grid">
+      <div class="ex-col" style="--c:var(--c-deel)"><h4><span class="dot"></span>Deelname · 5</h4>
+        <div class="rec">Pieter Smit<span class="meta">voorzitter · aanwezig</span></div>
+        <div class="rec">Thomas Visser, Lisa Hendriks<span class="meta">lid · aanwezig</span></div>
+        <div class="rec">Marieke van Dijk<span class="meta">notulist · aanwezig</span></div>
+        <div class="rec">Sophie Mulder<span class="meta">lid · afwezig met bericht</span></div>
+      </div>
+      <div class="ex-col" style="--c:var(--c-agenda)"><h4><span class="dot"></span>Agendapunten · 2</h4>
+        <div class="rec">1. Definitieve begroting 2026<span class="meta">ter besluitvorming · onderwerp: Begroting 2026</span></div>
+        <div class="rec">2. Windmolenpark Noorderpolder<span class="meta">ter besluitvorming · onderwerp: Duurzaamheid en klimaat</span></div>
+        <h4 style="--c:var(--c-stuk);margin-top:6px"><span class="dot"></span>Stukken · 2</h4>
+        <div class="rec">Begroting 2026 definitief.pdf<span class="meta">voorstel · bij punt 1 · openbaar</span></div>
+        <div class="rec">Bezwaren omwonenden.pdf<span class="meta">brief · bij punt 2 · vertrouwelijk</span></div>
+      </div>
+      <div class="ex-col" style="--c:var(--c-bes)"><h4><span class="dot"></span>Besluiten · 2</h4>
+        <div class="rec"><code>CVB-2026-001</code>Begroting 2026 vastgesteld (€ 47,3 mln)<span class="meta">genomen · grondslag: Begroting 2026 definitief.pdf</span></div>
+        <div class="rec"><code>CVB-2026-002</code>Aanvullend geluidsonderzoek windmolenpark<span class="meta">genomen · standpunt aangehouden</span></div>
+        <h4 style="--c:var(--c-act);margin-top:6px"><span class="dot"></span>Acties · 3</h4>
+        <div class="rec">Amendementen verwerken in begroting<span class="meta">Lisa Hendriks · uiterlijk 20 jan <span class="pill ok">afgerond</span></span></div>
+        <div class="rec">Geluidsonderzoek organiseren<span class="meta">Thomas Visser · uiterlijk 1 mrt <span class="pill open">loopt</span></span></div>
+        <div class="rec">Bezwaarmakers informeren<span class="meta">Marieke van Dijk · uiterlijk 22 jan <span class="pill open">open</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-zoek">
+  <div><h2 id="h-zoek">Waar een bestuurder op wil zoeken</h2>
+  <p class="sub prose">De toets voor het model: elke vraag moet zonder bladeren te beantwoorden zijn. Rechts het pad door het model dat het antwoord oplevert.</p></div>
+  <div class="qtable-wrap"><table class="qtable" id="qtable">
+    <thead><tr><th>Vraag</th><th>Pad door het model</th></tr></thead><tbody></tbody>
+  </table></div>
+  <h3 style="margin-top:8px">Filters die overal terugkomen</h3>
+  <div class="facets">
+    <div class="facet"><b>Periode</b><span>Vergaderdatum, deadline, afgerond-op. Ook “dit kwartaal” of “sinds vorig jaar”.</span></div>
+    <div class="facet"><b>Bedrijfsonderdeel</b><span>Inclusief alles wat eronder valt, dankzij de hiërarchie.</span></div>
+    <div class="facet"><b>Persoon, per rol</b><span>Als eigenaar, uitvoerder, aanwezige, voorzitter, auteur of betrokkene.</span></div>
+    <div class="facet"><b>Onderwerp</b><span>Volgt een dossier over vergaderingen en onderdelen heen.</span></div>
+    <div class="facet"><b>Status</b><span>Open, over de deadline, afgerond; besluit genomen, aangehouden, herzien.</span></div>
+    <div class="facet"><b>Vrije tekst</b><span>Door titels, besluitteksten, besprekingen én de inhoud van bijlagen heen.</span></div>
+  </div>
+</section>
+
+<section aria-labelledby="h-diff">
+  <div><h2 id="h-diff">Wat er anders is dan in de Obsidian-proef</h2></div>
+  <div class="diff">
+    <div><b>Bedrijfsonderdeel als eigen soort</b>Nu kun je per college, MT of team filteren, en ook op alles wat onder een directie valt.</div>
+    <div><b>Aanwezigheid met rol</b>In plaats van losse lijstjes Aanwezigen/Afwezigen/Voorzitter is er één koppeltabel met rol en aanwezigheid per persoon.</div>
+    <div><b>Stukken als bijlage</b>Nieuw. Met soort, vertrouwelijkheid en de tekst uit het bestand, zodat je ook ín bijlagen zoekt.</div>
+    <div><b>Status, deadline, één eigenaar</b>Acties krijgen een status en een deadline. Er is altijd één eigenaar die aanspreekbaar is; anderen kunnen meewerken.</div>
+    <div><b>Besluitnummer en besluitgeschiedenis</b>Elk besluit krijgt een vast nummer en kan verwijzen naar het besluit dat het vervangt.</div>
+    <div><b>Agendapunt als tussenlaag</b>Besluiten, acties en stukken hangen aan een agendapunt. Zo blijft de samenhang uit de vergadering zichtbaar.</div>
+  </div>
+</section>
+
+<section aria-labelledby="h-keuze">
+  <div><h2 id="h-keuze">Keuzes om samen te maken</h2>
+  <p class="sub prose">Bij elk punt staat wat ik zou aanraden voor de proof of concept.</p></div>
+  <div class="choices">
+    <div class="choice"><b>Agendapunt: wel of niet als aparte laag?</b><span class="rec-line"><b>Advies: wel.</b> Iets meer invoerwerk, maar besluiten en stukken blijven in hun context. Zonder agendapunt hangt alles direct aan de vergadering.</span></div>
+    <div class="choice"><b>Eén eigenaar per actie, of meerdere?</b><span class="rec-line"><b>Advies: precies één eigenaar</b>, plus optioneel meerdere uitvoerders. In de Obsidian-proef konden het er meer zijn; dan voelt niemand zich echt verantwoordelijk.</span></div>
+    <div class="choice"><b>Vaste leden per bedrijfsonderdeel bijhouden?</b><span class="rec-line"><b>Advies: ja, licht.</b> Een lijstje vaste leden maakt het mogelijk de aanwezigheidslijst vooraf in te vullen. Dat bespaart de notulist werk.</span></div>
+    <div class="choice"><b>Hoe ver gaat vertrouwelijkheid?</b><span class="rec-line"><b>Advies: in de proof of concept alleen een label</b> (openbaar · intern · vertrouwelijk) op stukken en besluiten. Echte toegangsrechten per persoon komen pas in een volgende stap.</span></div>
+    <div class="choice"><b>Waar worden de gegevens bewaard?</b><span class="rec-line"><b>Advies: in een open formaat dat je zelf beheert</b>, passend bij informatieautonomie. Bijvoorbeeld één lokaal SQLite-bestand met ingebouwde zoekfunctie, met export naar Markdown of JSON. Zo blijven de gegevens ook zonder deze app leesbaar.</span></div>
+  </div>
+</section>
+
+<footer>Voorstel voor bespreking. Er is nog niets gebouwd; dit is de basis voor de proof of concept.</footer>
+</div>
+
+<script>
+const E = [
+ {id:"org",c:"--c-org",name:"Bedrijfsonderdeel",kind:"wie vergadert",why:"Het gremium dat vergadert: college, MT, afdeling, team, commissie of projectgroep.",f:[
+  ["naam","tekst",1,"Bijv. “College van B&W”, “MT Bedrijfsvoering”"],
+  ["afkorting","tekst",1,"Basis voor besluitnummers, bijv. CVB"],
+  ["soort","keuze",1,"bestuur · directie · afdeling · team · commissie · projectgroep"],
+  ["valt_onder","→ Bedrijfsonderdeel",0,"Hiërarchie: zoek op alles onder een directie"],
+  ["actief","ja/nee",1,"Opgeheven onderdelen blijven vindbaar"]]},
+ {id:"verg",c:"--c-verg",name:"Vergadering",kind:"het scharnier",why:"Eén bijeenkomst. Alles hangt hieraan; de vergadering toont automatisch haar aanwezigen, stukken, besluiten en acties.",f:[
+  ["bedrijfsonderdeel","→ Bedrijfsonderdeel",1,"Wie vergaderde"],
+  ["datum","datum",1,""],
+  ["begin / eind","tijd",0,""],
+  ["titel","tekst",0,"Standaard: onderdeel + datum"],
+  ["locatie","tekst",0,"Zaal of online"],
+  ["status","keuze",1,"gepland · concept · vastgesteld"],
+  ["vastgesteld_in","→ Vergadering",0,"De vergadering waarin dit verslag is goedgekeurd"],
+  ["samenvatting","opgemaakte tekst",0,"Korte lopende tekst; details staan in agendapunten"]]},
+ {id:"deel",c:"--c-deel",name:"Deelname",kind:"koppeltabel",why:"Wie er bij welke vergadering hoorde, in welke rol, en of die persoon er ook was.",f:[
+  ["vergadering","→ Vergadering",1,""],
+  ["persoon","→ Persoon",1,""],
+  ["rol","keuze",1,"voorzitter · lid · notulist · adviseur · gast"],
+  ["aanwezigheid","keuze",1,"aanwezig · deels · afwezig met bericht · afwezig"]]},
+ {id:"pers",c:"--c-pers",name:"Persoon",kind:"wie",why:"Iedereen die aanwezig is, iets indient of een actie krijgt. De persoonspagina toont automatisch acties, besluiten en vergaderingen.",f:[
+  ["voornaam / achternaam","tekst",1,""],
+  ["e-mail","tekst",1,"Unieke sleutel; later te koppelen aan inloggen"],
+  ["functie","tekst",0,""],
+  ["bedrijfsonderdeel","→ Bedrijfsonderdeel",0,"Waar iemand normaal werkt"],
+  ["telefoon","tekst",0,""],
+  ["foto","afbeelding",0,"Herkenbaarheid in overzichten"],
+  ["actief","ja/nee",1,"Vertrokken mensen blijven zichtbaar bij oude acties"]]},
+ {id:"agenda",c:"--c-agenda",name:"Agendapunt",kind:"context",why:"Een punt op de agenda. Houdt bespreking, stukken, besluiten en acties bij elkaar.",f:[
+  ["vergadering","→ Vergadering",1,""],
+  ["volgnummer","getal",1,"Volgorde op de agenda"],
+  ["titel","tekst",1,""],
+  ["soort","keuze",0,"ter besluitvorming · ter bespreking · ter informatie"],
+  ["onderwerpen","→ Onderwerp (n)",0,"Eén of meer dossiers"],
+  ["inbrenger","→ Persoon",0,"Wie het punt agendeerde"],
+  ["bespreking","opgemaakte tekst",0,"Kern van de discussie, kort"]]},
+ {id:"stuk",c:"--c-stuk",name:"Stuk",kind:"bijlage",why:"Een document bij de vergadering. De tekst uit het bestand wordt bewaard, zodat zoeken ook in de bijlagen werkt.",f:[
+  ["titel","tekst",1,""],
+  ["bestand","bijlage",1,"pdf, docx, xlsx, pptx …"],
+  ["vergadering","→ Vergadering",1,""],
+  ["agendapunt","→ Agendapunt",0,""],
+  ["soort","keuze",0,"voorstel · notitie · rapport · presentatie · brief · verslag"],
+  ["auteur","→ Persoon",0,""],
+  ["versie / datum","tekst / datum",0,""],
+  ["vertrouwelijkheid","keuze",1,"openbaar · intern · vertrouwelijk"],
+  ["inhoud_tekst","tekst (automatisch)",0,"Uit het bestand gehaald, voor zoeken"]]},
+ {id:"bes",c:"--c-bes",name:"Besluit",kind:"wat is besloten",why:"Een genomen (of aangehouden) besluit, met eigen nummer, zodat ernaar verwezen kan worden.",f:[
+  ["nummer","automatisch",1,"Afkorting-jaar-volgnummer, bijv. CVB-2026-014"],
+  ["titel","tekst",1,"Kort en zoekbaar"],
+  ["besluittekst","opgemaakte tekst",1,""],
+  ["motivering","opgemaakte tekst",0,""],
+  ["vergadering","→ Vergadering",1,""],
+  ["agendapunt","→ Agendapunt",0,""],
+  ["onderwerpen","→ Onderwerp (n)",0,"Standaard overgenomen van het agendapunt"],
+  ["status","keuze",1,"genomen · aangehouden · ingetrokken · herzien"],
+  ["vervangt","→ Besluit",0,"Besluitgeschiedenis: wat is hiermee vervangen"],
+  ["grondslag","→ Stuk (n)",0,"Op basis van welke stukken"],
+  ["betrokkenen","→ Persoon (n)",0,""]]},
+ {id:"act",c:"--c-act",name:"Actie",kind:"wie doet wat",why:"Een afspraak met één aanspreekbare eigenaar en een deadline. Verschijnt op de pagina van die eigenaar.",f:[
+  ["titel","tekst",1,""],
+  ["omschrijving","opgemaakte tekst",0,""],
+  ["eigenaar","→ Persoon",1,"Precies één"],
+  ["uitvoerders","→ Persoon (n)",0,"Wie meewerkt"],
+  ["deadline","datum",0,""],
+  ["status","keuze",1,"open · loopt · afgerond · vervallen"],
+  ["vergadering","→ Vergadering",1,"Waar de actie is uitgezet"],
+  ["agendapunt","→ Agendapunt",0,""],
+  ["besluit","→ Besluit",0,"Als de actie uit een besluit voortkomt"],
+  ["afgerond_op","datum",0,""],
+  ["voortgang","notities met datum",0,"Korte updates, ook uit latere vergaderingen"]]},
+ {id:"ond",c:"--c-ond",name:"Onderwerp",kind:"dossier",why:"Een thema dat over vergaderingen heen terugkomt, zoals “Begroting 2026”. Maakt de geschiedenis van een dossier in één klik zichtbaar.",f:[
+  ["naam","tekst",1,""],
+  ["omschrijving","tekst",0,""],
+  ["portefeuillehouder","→ Persoon",0,"Bestuurlijk verantwoordelijke"],
+  ["trefwoorden","tekst (n)",0,"Extra zoektermen en synoniemen"]]}
+];
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+document.getElementById("toc").innerHTML=E.map(e=>`<a class="chip" href="#${e.id}" style="--c:var(${e.c})"><span class="dot"></span>${e.name}</a>`).join("");
+document.getElementById("entities").innerHTML=E.map(e=>`
+ <article class="entity" id="${e.id}" style="--c:var(${e.c})">
+  <div class="head"><h3>${e.name}</h3><span class="kind">${e.kind}</span></div>
+  <p class="why">${esc(e.why)}</p>
+  <table class="fields"><tbody>${e.f.map(([f,t,r,n])=>`<tr><td class="f">${esc(f)}${r?'<span class="req" title="verplicht">●</span>':''}</td><td class="t">${t.startsWith("→")?`<b>${esc(t)}</b>`:esc(t)}</td><td class="n">${esc(n)}</td></tr>`).join("")}</tbody></table>
+ </article>`).join("");
+const C=Object.fromEntries(E.map(e=>[e.name,e.c]));
+const Q=[
+ ["Welke acties staan nog open op naam van Lisa?",["Persoon","Actie"],"eigenaar = Lisa, status open of loopt"],
+ ["Welke acties zijn over de deadline, per bedrijfsonderdeel?",["Bedrijfsonderdeel","Vergadering","Actie"],"deadline voorbij, niet afgerond"],
+ ["Wanneer hebben we besloten over het windmolenpark?",["Onderwerp","Besluit","Vergadering"],"of vrije tekst in besluittekst"],
+ ["Welke besluiten nam het MT dit kwartaal?",["Bedrijfsonderdeel","Vergadering","Besluit"],"op vergaderdatum"],
+ ["Op basis van welke stukken is CVB-2026-001 genomen?",["Besluit","Stuk"],"via grondslag"],
+ ["Was Sophie aanwezig toen dat besluit viel?",["Besluit","Vergadering","Deelname"],"aanwezigheid van Sophie"],
+ ["Alles wat er ooit over de begroting is besproken, besloten en aangeleverd",["Onderwerp","Agendapunt","Besluit"],"plus Stukken en Acties"],
+ ["Welke besluiten zijn later herzien of ingetrokken?",["Besluit","Besluit"],"via vervangt en status"],
+ ["In welke bijlage stond die passage over parkeernormen?",["Stuk"],"vrije tekst in inhoud_tekst"],
+ ["Hoe vaak was iemand dit jaar afwezig bij het college?",["Persoon","Deelname","Vergadering"],"telling per aanwezigheid"]
+];
+document.querySelector("#qtable tbody").innerHTML=Q.map(([q,p,n])=>`<tr><td>${esc(q)}</td><td><div class="path">${p.map((s,i)=>`${i?'<span class="arr">→</span>':''}<span class="step" style="--c:var(${C[s]})"><span class="dot"></span>${s}</span>`).join("")}</div><div style="font-size:12.5px;color:var(--muted);margin-top:4px">${esc(n)}</div></td></tr>`).join("");
+</script>
