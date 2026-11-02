@@ -31,25 +31,29 @@ def main():
     shutil.copytree(os.path.join(BASIS, 'static'), doel)
     shutil.copy(os.path.join(BASIS, 'web', 'browser.js'), doel)
 
-    index = os.path.join(doel, 'index.html')
-    with open(index, encoding='utf-8') as f:
-        html = f.read()
-    html = html.replace('<script src="app.js"></script>', '<script src="browser.js"></script>\n<script src="app.js"></script>')
-    with open(index, 'w', encoding='utf-8') as f:
-        f.write(html)
-
     with zipfile.ZipFile(os.path.join(doel, 'app.zip'), 'w', zipfile.ZIP_DEFLATED) as zf:
         for naam in ('server.py', 'opslag.py', 'schema.sql'):
             zf.write(os.path.join(BASIS, naam), naam)
     with zipfile.ZipFile(os.path.join(doel, 'data.zip'), 'w', zipfile.ZIP_DEFLATED) as zf:
         zip_map(zf, os.path.join(BASIS, 'data'))
     # Nieuwe demodata of code: de browser zet zijn opgeslagen gegevens dan terug (zie web/browser.js).
+    h = hashlib.sha1()
+    for naam in ('app.zip', 'data.zip', 'browser.js', 'app.js', 'app.css'):
+        with open(os.path.join(doel, naam), 'rb') as z:
+            h.update(z.read())
+    versie = h.hexdigest()[:12]
     with open(os.path.join(doel, 'versie.txt'), 'w') as f:
-        h = hashlib.sha1()
-        for naam in ('app.zip', 'data.zip'):
-            with open(os.path.join(doel, naam), 'rb') as z:
-                h.update(z.read())
-        f.write(h.hexdigest()[:12])
+        f.write(versie)
+
+    # Versie achter de links, zodat browsers na een publicatie niet nog de oude scripts uit hun cache halen.
+    index = os.path.join(doel, 'index.html')
+    with open(index, encoding='utf-8') as f:
+        html = f.read()
+    html = html.replace('href="app.css"', f'href="app.css?v={versie}"')
+    html = html.replace('<script src="app.js"></script>',
+                        f'<script src="browser.js?v={versie}"></script>\n<script src="app.js?v={versie}"></script>')
+    with open(index, 'w', encoding='utf-8') as f:
+        f.write(html)
     open(os.path.join(doel, '.nojekyll'), 'w').close()
     print(f'Browserversie gebouwd in {doel}')
 
