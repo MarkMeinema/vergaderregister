@@ -6,6 +6,7 @@
 De browserversie draait server.py zelf in de browser met Pyodide (zie web/browser.js). Wijzigingen blijven
 per browser bewaard in IndexedDB; de demodata in data/ wordt bij een eerste bezoek ingeladen.
 """
+import hashlib
 import os
 import shutil
 import sys
@@ -42,6 +43,13 @@ def main():
             zf.write(os.path.join(BASIS, naam), naam)
     with zipfile.ZipFile(os.path.join(doel, 'data.zip'), 'w', zipfile.ZIP_DEFLATED) as zf:
         zip_map(zf, os.path.join(BASIS, 'data'))
+    # Nieuwe demodata of code: de browser zet zijn opgeslagen gegevens dan terug (zie web/browser.js).
+    with open(os.path.join(doel, 'versie.txt'), 'w') as f:
+        h = hashlib.sha1()
+        for naam in ('app.zip', 'data.zip'):
+            with open(os.path.join(doel, naam), 'rb') as z:
+                h.update(z.read())
+        f.write(h.hexdigest()[:12])
     open(os.path.join(doel, '.nojekyll'), 'w').close()
     print(f'Browserversie gebouwd in {doel}')
 

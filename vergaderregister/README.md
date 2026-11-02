@@ -29,7 +29,7 @@ python3 bouw_web.py
 Dat zet een statische site in `_site/`. Bij elke push naar `main` doet de workflow in `.github/workflows/pages.yml` dit automatisch en publiceert het resultaat. Verschillen met de lokale versie:
 
 - Bij het eerste bezoek haalt de browser Pyodide op van cdn.jsdelivr.net (ongeveer 10 MB). Dit is dus de enige variant met gegevensverkeer naar buiten.
-- Wijzigingen worden in de browser bewaard (IndexedDB), alleen voor die bezoeker en alleen op dat apparaat. Met "Demogegevens terugzetten" linksonder begin je opnieuw met de demodata uit `data/`.
+- Wijzigingen worden in de browser bewaard (IndexedDB), alleen voor die bezoeker en alleen op dat apparaat. Na 4 uur (`RESET_UUR` in `web/browser.js`) en na elke nieuwe publicatie begint de browser weer met de demodata uit `data/`. Met "Demogegevens terugzetten" linksonder kan dat ook meteen.
 
 ## Waar staan de gegevens?
 

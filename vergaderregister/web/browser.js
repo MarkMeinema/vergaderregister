@@ -1,14 +1,25 @@
 /* Vergaderregister — browserversie. Draait server.py in de browser met Pyodide, zodat er geen server nodig is.
    Vangt verzoeken naar api/, bijlage/ en export/ af en stuurt ze naar de Python-Handler. De gegevens staan
-   in IndexedDB (per browser); "Demogegevens terugzetten" begint weer met de meegeleverde demodata. */
+   in IndexedDB (per browser) en gaan na RESET_UUR, of na een nieuwe publicatie, terug naar de meegeleverde
+   demodata. "Demogegevens terugzetten" doet dat meteen. */
 'use strict';
 (() => {
   const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
   const BASIS = new URL('.', location.href).pathname;
-  const APP = '/app', DATA = '/app/data';
+  const APP = '/app', DATA = '/app/data', STEMPEL = DATA + '/.demo.json';
+  const RESET_UUR = 4;
+
+  const PY_WIS = `
+import os, shutil
+
+def wis_data():
+    for naam in os.listdir('${DATA}'):
+        p = os.path.join('${DATA}', naam)
+        shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
+`;
 
   const PY_BRUG = `
-import io, json, os, shutil, sys
+import io, json, os, sys
 sys.path.insert(0, '/app')
 os.environ['STIL'] = '1'
 import server
@@ -39,18 +50,18 @@ def verzoek(methode, pad, koppen, body):
     v.afhandelen(methode)
     return v.antwoord
 
-def wis_data():
-    for naam in os.listdir('${DATA}'):
-        p = os.path.join('${DATA}', naam)
-        shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
-
 server.init_db()
 `;
 
-  let py = null;
+  let py = null, versie = '';
   const meld = t => { const el = document.querySelector('#main .laden'); if (el) el.textContent = t; };
   const syncfs = vullen => new Promise((ok, fout) => py.FS.syncfs(vullen, e => (e ? fout(e) : ok())));
-  const haal = async pad => new Uint8Array(await (await fetch(BASIS + pad)).arrayBuffer());
+  const haal = async pad => new Uint8Array(await (await fetch(BASIS + pad, { cache: 'no-store' })).arrayBuffer());
+
+  // Wanneer zijn de demodata in deze browser voor het laatst ingeladen, en van welke publicatie?
+  const stempel = () => { try { return JSON.parse(py.FS.readFile(STEMPEL, { encoding: 'utf8' })); } catch { return null; } };
+  const resetOm = () => { const s = stempel(); return s ? new Date(s.tijd + RESET_UUR * 3600e3) : null; };
+  const verlopen = () => { const s = stempel(); return !s || s.versie !== versie || Date.now() >= resetOm().getTime(); };
 
   const klaar = (async () => {
     meld('Vergaderregister wordt geladen… (de eerste keer duurt dit even)');
@@ -66,8 +77,12 @@ server.init_db()
     py.FS.mount(py.FS.filesystems.IDBFS, {}, DATA);
     await syncfs(true);
     py.unpackArchive(await haal('app.zip'), 'zip', { extractDir: APP });
-    if (py.FS.readdir(DATA).length <= 2) {  // alleen . en ..: eerste bezoek of na terugzetten
+    versie = new TextDecoder().decode(await haal('versie.txt')).trim();
+    py.runPython(PY_WIS);
+    if (verlopen()) {  // eerste bezoek, na terugzetten, na RESET_UUR of na een nieuwe publicatie
+      py.globals.get('wis_data')();
       py.unpackArchive(await haal('data.zip'), 'zip', { extractDir: DATA });
+      py.FS.writeFile(STEMPEL, JSON.stringify({ versie, tijd: Date.now() }));
     }
     py.runPython(PY_BRUG);
     await syncfs(false);
@@ -128,7 +143,11 @@ server.init_db()
     const voet = document.querySelector('.zijbalk-voet');
     if (!voet) return;
     const uitleg = Object.assign(document.createElement('p'), { className: 'gedempt klein demo-uitleg',
-      textContent: 'Demo: je wijzigingen blijven alleen in deze browser bewaard.' });
+      textContent: `Demo: je wijzigingen blijven alleen in deze browser bewaard en worden elke ${RESET_UUR} uur teruggezet.` });
+    klaar.then(() => {
+      const om = resetOm();
+      if (om) uitleg.textContent += ` Volgende keer: ${om.toLocaleString('nl-NL', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}.`;
+    });
     const stijl = Object.assign(document.createElement('style'), {
       textContent: '.demo-uitleg { margin: 4px 0 0; } @media (max-width: 900px) { .demo-uitleg { display: none; } }' });
     const terug = Object.assign(document.createElement('a'), { className: 'link-klein', href: '#', textContent: 'Demogegevens terugzetten' });
@@ -142,5 +161,12 @@ server.init_db()
     });
     document.head.appendChild(stijl);
     voet.append(uitleg, terug);
+  });
+
+  // Staat het tabblad lang open? Bij terugkeer na de resettijd opnieuw beginnen.
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState !== 'visible' || !py) return;
+    await klaar;
+    if (Date.now() >= (resetOm()?.getTime() ?? 0)) location.reload();
   });
 })();
